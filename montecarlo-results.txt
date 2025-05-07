@@ -7,3 +7,4 @@ flush		0.0304791
 full house	0.0067738
 four of a kind	0.0016922
 straight flush	0.0001516
+royal flush     0.0000015
