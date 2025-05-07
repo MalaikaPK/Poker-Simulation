@@ -8,7 +8,7 @@ class SimulationResult:
     Represents the result of a poker simulation.
     """
     results: dict[PokerPlayer, tuple[int, int, int]]  # Player -> (Raises, Folds, Wins)
-    earnings_per_round: dict[PokerPlayer, list[int]]
+    earnings_per_round: dict[PokerPlayer, list[int]]  # Player -> (Earnings)
 
 
     def __init__(self):
@@ -61,7 +61,6 @@ def simulate_poker_games(number_of_games: int, belief_updating=False) -> Simulat
         game_result = game.generate_game_result()
         payoff_result = game.generate_payoff_result()
         simulation_result.add_game_result(game_result, payoff_result)
-        #simulation_result.add_game_result(game.generate_game_result())
 
     # Add empirical priors from simulated games
     if belief_updating:

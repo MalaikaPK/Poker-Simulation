@@ -99,8 +99,6 @@ class PokerGame:
             # Store opponent actions for belief updating in PBE
             for other_player in self.active_players:
                 if other_player != player:
-                    # if not other_player.opponent_actions[player]:
-                    #     other_player.opponent_actions[player] = []
                     other_player.opponent_actions.append(decision)
 
             # Save the decision
@@ -112,20 +110,10 @@ class PokerGame:
             elif decision == "Fold":
                 fold_idxs.append(idx)
 
-            # # Handle player decisions
-            # fold_idxs = []
-            # match decision:
-            #     case "Raise":
-            #         pass  # Do nothing when player raises
-            #     case "Fold":
-            #         fold_idxs.append(idx)  # Track indices of players who fold
          # Remove folded players after decisions are made
         for idx in reversed(fold_idxs):  # Iterate in reverse to avoid skipping players
             self.active_players.pop(idx)
 
-        # # Remove players who fold from the game
-        # for idx in fold_idxs:
-        #     player = self.active_players.pop(idx)
             
     def _save_player_decisions(self, player: PokerPlayer, decision: str):
         if player not in self.player_decisions:
@@ -140,22 +128,19 @@ class PokerGame:
         return self.player_payoffs  # This must be tracked during play_game()
 
 
-
     def _process_winner(self):
         """
         Determine the winner of the game.
         """
         self.winner = max(self.active_players, key=lambda player: player.hand + self.table)
-        # self.winning_hand = get_hand_ranking(self.winner.hand)[1]
+
         
     def play_game(self):
         """
         Play a game of poker.
         """
         self._reset_game()
-
         self._deal_hands()
-
         self._deal_flop()
         self._process_player_decisions()
         self._deal_turn()
@@ -163,7 +148,7 @@ class PokerGame:
         self._deal_river()
         self._process_player_decisions()
 
-         # NEW: Save final player hand categories
+         # Save final player hand categories
         for player in self.players:
             full_hand = player.hand + self.table
             hand_category = full_hand.get_hand_category()

@@ -98,11 +98,6 @@ print("\nWin Rate Player:")
 print(model2.summary())
 
 
-# # Example regression: Earnings explained by model and player type
-# model = smf.ols("Raises ~ C(Model) + C(Player)", data=results_raw).fit()
-# print("\nTotal Raises Player:")
-# print(model.summary())
-
 model_total = smf.ols('Earnings ~ Raises + WinRate + C(Model)', data=results_raw).fit()
 print("\nTotal Earnings Regression:")
 print(model_total.summary())
@@ -118,10 +113,6 @@ model_winrate = smf.ols('WinRate ~ Raises + EarningsPerRound', data=results_raw)
 print("\nWin Rate Regression:")
 print(model_winrate.summary())
 
-# #using combined data
-# model_raises = smf.ols('Raises ~ C(Player)', data=results_raw).fit()
-# print("\nRaises Regression:")
-# print(model_raises.summary())
 
 #interaction term
 model_simple = smf.ols('EarningsPerRound ~ C(Model) * C(Player) + C(Model) + Raises', data=results_raw).fit()
@@ -168,58 +159,6 @@ for player in combined['Player'].unique():
 
 
 
-# cols_needed = ['Earnings', 'Player', 'Model']
-
-# # Step 2: Drop rows with infs or NaNs
-# combined_clean = combined[cols_needed].replace([np.inf, -np.inf], np.nan).dropna()
-
-# # Step 3: Sanity check
-# numeric_data = combined_clean.select_dtypes(include=[np.number])
-# print(f"Any infs left? {np.isinf(numeric_data.to_numpy()).any()}")
-
-
-# # Step 4: Now build the model and ANOVA safely
-# model = smf.ols('Earnings ~ C(Player)', data=combined_clean).fit()
-# anova_table = sm.stats.anova_lm(model, typ=2)
-# print("\n--- ANOVA on Earnings: Player × Model ---")
-# print(anova_table)
-
-# # Drop rows with NaNs or infs in relevant columns
-# combined_clean = combined[['Earnings', 'Player', 'Raises']].replace([np.inf, -np.inf], np.nan).dropna()
-
-# # Rerun model on cleaned data
-# model = smf.ols('Earnings ~ C(Player)', data=combined_clean).fit()
-# anova_table = sm.stats.anova_lm(model, typ=2)
-# print("\n--- ANOVA on Earnings: Player × Model ---")
-# print(anova_table)
-
-
-# # Clean and rerun ANOVA for per-round earnings
-# combined_round_clean = combined[['EarningsPerRound', 'Player', 'Model']].replace([np.inf, -np.inf], np.nan).dropna()
-
-# model_round = smf.ols('EarningsPerRound ~ C(Player)', data=combined_round_clean).fit()
-# anova_table_round = sm.stats.anova_lm(model_round, typ=2)
-# print("\n--- ANOVA on Avg Earnings Per Round: Player × Model ---")
-# print(anova_table_round)
-
-# # === ANOVA on Raising Frequency ===
-# print("\n--- ANOVA on Raise Frequency ---")
-# anova_data = []
-# for player in results_bne['Player'].unique():
-#     bne_vals = results_bne[results_bne['Player'] == player]['Raises']
-#     pbe_vals = results_pbe[results_pbe['Player'] == player]['Raises']
-#     anova_data.append(pd.concat([bne_vals, pbe_vals]))
-
-# f_stat, anova_p = f_oneway(*anova_data)
-# print(f"ANOVA: F = {f_stat:.4f}, p = {anova_p:.4f} {'✅' if anova_p < 0.05 else '❌'}")
-
-
-# tukey = pairwise_tukeyhsd(endog=combined_round_clean['EarningsPerRound'],
-#                           groups=combined_round_clean['Player'],
-#                           alpha=0.05)
-# print(tukey)
-
-
 
 def chi_square_test(df, label="", print_expected=False):
     """
@@ -232,9 +171,6 @@ def chi_square_test(df, label="", print_expected=False):
     """
     # Convert the categorical columns into a contingency table
     contingency_table = pd.crosstab(df['Player'], df['Raises'])
-    
-    # Check the contingency table
-    #print(f"Contingency Table for {label}:\n{contingency_table}\n")
     
     try:
         chi2, p, dof, expected = stats.chi2_contingency(contingency_table)
@@ -364,29 +300,6 @@ def bootstrap_ci(data, n_bootstrap=10000, ci=0.95):
 
 
 
-# sns.boxplot(data=earnings_raw, x='Model', y='Earnings', hue='Player')
-# plt.title("Earnings Distribution per Player Type")
-# plt.show()
-# print(combined[['Player']].head())
-# print(results_bne['Player'].unique())
-# print(results_pbe['Player'].unique())
-
-# # === Helper: Cohen's d ===
-# def cohens_d(x, y):
-#     pooled_std = np.sqrt((np.std(x, ddof=1) ** 2 + np.std(y, ddof=1) ** 2) / 2)
-#     return (np.mean(x) - np.mean(y)) / pooled_std if pooled_std else 0
-
-# # === Helper: Bootstrapped CI ===
-# def bootstrap_ci(data, n_bootstrap=1000, ci=95):
-#     boot_samples = [np.mean(np.random.choice(data, size=len(data), replace=True)) for _ in range(n_bootstrap)]
-#     lower = np.percentile(boot_samples, (100 - ci) / 2)
-#     upper = np.percentile(boot_samples, 100 - (100 - ci) / 2)
-#     return lower, upper
-
-
-# print(results_raw.columns)
-
-
 # === Subgroup t-tests, effect sizes, and CIs ===
 player_types = earnings_raw['Player'].unique()
 
@@ -408,48 +321,11 @@ for player in player_types:
     ci_pbe = bootstrap_ci(earnings_pbe)
 
 
-    # print(f"\n--- {player} ---")
-    # print(f"T-Test: t = {t_stat:.4f}, p = {p_val:.5f} {'✅' if p_val < 0.05 else '❌'}")
-    # print(f"Cohen's d = {d:.3f}")
-    # print(f"BNE 95% CI = [{ci_bne[0]:.2f}, {ci_bne[1]:.2f}]")
-    # print(f"PBE 95% CI = [{ci_pbe[0]:.2f}, {ci_pbe[1]:.2f}]")
-
-# # Paired t-test for win rates (using raw data)
-# earnings_bne = results_raw[results_raw['Model'] == 'BNE']['WinRate']
-# earnings_pbe = results_raw[results_raw['Model'] == 'PBE']['WinRate']
-
-# t_stat, p_val = ttest_rel(earnings_bne, earnings_pbe)
-# print(f"Paired T-test for Win Rate: t-statistic = {t_stat}, p-value = {p_val}")
-
-# # Paired t-test for win rates
-# t_stat, p_val = ttest_rel(results_bne['WinRate'], results_pbe['WinRate'])
-# print(f"Paired T-test for Win Rate: t-statistic = {t_stat}, p-value = {p_val}")
-
-
 # T-test for comparing earnings between BNE and PBE for each player type
 for player_type in earnings_raw['Player'].unique():
     earnings_bne = earnings_raw[(earnings_raw['Model'] == 'BNE') & (earnings_raw['Player'] == player_type)]['Earnings']
     earnings_pbe = earnings_raw[(earnings_raw['Model'] == 'PBE') & (earnings_raw['Player'] == player_type)]['Earnings']
-    
-    # t_stat, p_val = ttest_ind(earnings_bne, earnings_pbe)
-    # print(f"T-test for {player_type} earnings: t-statistic = {t_stat}, p-value = {p_val}")
-
-
-# print(results_raw.columns)
-# # Assuming 'Actions' column is added, now perform Chi-Square test
-# if 'Actions' in results_raw.columns:
-#     # Get counts of actions (Raise vs. Fold) for BNE and PBE models
-#     action_counts_bne = results_raw[results_raw['Model'] == 'BNE']['Action'].value_counts()
-#     action_counts_pbe = results_raw[results_raw['Model'] == 'PBE']['Action'].value_counts()
-#     action_table = pd.DataFrame([action_counts_bne, action_counts_pbe]).T
-    
-#     # Perform chi-square test
-#     chi2_stat, p_val, dof, expected = chi2_contingency(action_table)
-#     print(f"Chi-Square Test: chi2_stat = {chi2_stat}, p-value = {p_val}")
-# else:
-#     print("'Actions' column not found in results_raw")
-
-
+ 
 
 # ANOVA for earnings by player type
 earnings_by_type = [results_raw[results_raw['Player'] == ptype]['Earnings'] for ptype in player_types]
@@ -527,27 +403,6 @@ print(anova_table)
 
 
 
-
-
-
-
-
-# print( summary_col([model1,model,model2,model_avg, model_simple, model_int],stars=True,float_format='%0.2f',
-#                   info_dict={'N':lambda x: "{0:d}".format(int(x.nobs)),
-#                              'R2':lambda x: "{:.2f}".format(x.rsquared)}))
-
-
-# print(summary_col([model1, model], stars=True, float_format='%0.2f',
-#                   model_names=["Earnings I", "Earnings II"],
-#                   info_dict={'N': lambda x: f"{int(x.nobs)}",
-#                              'R2': lambda x: f"{x.rsquared:.2f}"}))
-
-
-# with open("regression_table.tex", "w") as f:
-#     f.write(summary_col([model1,model,model2,model_avg, model_simple, model_int], drop_omitted=True).as_latex())
-
-
-
 # Create the summary table with all the customizations
 summary = summary_col(
     [model1, model, model2, model_winrate, model_int, model_avg, model_simple],
@@ -576,8 +431,6 @@ print(summary)
 with open("regression_table.tex", "w") as f:
     f.write(summary.as_latex())
 
-
-### TEST IF PPBE AFFECT RATIONNAL PLAYER ONLY. BELIEF UPDATING IS DISTORTED FOR THE OTHERS WHICH CAN AFFECT
 
 # Subset for Rational players
 rational_bne = results_raw[(results_raw['Model'] == 'BNE') & (results_raw['Player'] == 'Rational')]
@@ -643,3 +496,78 @@ print(anova_results)
 model = smf.ols('EarningsPerRound ~ WinRate', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
+
+
+
+# Define custom colors
+copenhagen_red = "#990000"
+pbe_gray = "#A5ACAF"
+
+# Input data from the user's table
+data = {
+    'Player': ['Risk Averse', 'Risk Seeking', 'Loss Averse', 'Optimistic', 'Rational'],
+    'BNE': [165.0, -57.0, 97.0, -96.0, -109.0],
+    'PBE': [4.0, -46.0, 59.0, -79.0, 62.0]
+}
+
+# Create separate dataframes for BNE and PBE
+df_bne = pd.DataFrame({
+    'Player': data['Player'],
+    'Earnings': data['BNE'],
+    'Type': 'BNE'
+})
+df_pbe = pd.DataFrame({
+    'Player': data['Player'],
+    'Earnings': data['PBE'],
+    'Type': 'PBE'
+})
+
+# Combine for plotting
+df = pd.concat([df_bne, df_pbe])
+
+# Plot
+plt.figure(figsize=(10, 5))
+sns.barplot(x='Player', y='Earnings', hue='Type', data=df, palette=[copenhagen_red, pbe_gray])
+plt.title("Average Earnings Comparison (BNE vs PBE)")
+plt.ylabel("Average Chips Earned")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+
+
+# Define custom colors
+copenhagen_red = "#990000"
+pbe_gray = "#A5ACAF"
+
+# Input data from the user's table
+data = {
+    'Player': ['Risk Averse', 'Risk Seeking', 'Loss Averse', 'Optimistic', 'Rational'],
+    'BNE': [6.8, -2.6, -43.0, 15.2, 23.6],
+    'PBE': [-6.8, -4.4, 11.0, -7.0, 7.2]
+}
+
+# Create separate dataframes for BNE and PBE
+df_bne = pd.DataFrame({
+    'Player': data['Player'],
+    'Earnings': data['BNE'],
+    'Type': 'BNE'
+})
+df_pbe = pd.DataFrame({
+    'Player': data['Player'],
+    'Earnings': data['PBE'],
+    'Type': 'PBE'
+})
+
+# Combine for plotting
+df = pd.concat([df_bne, df_pbe])
+
+# Plot
+plt.figure(figsize=(10, 5))
+sns.barplot(x='Player', y='Earnings', hue='Type', data=df, palette=[copenhagen_red, pbe_gray])
+plt.title("Average Earnings Comparison (BNE vs PBE)")
+plt.ylabel("Average Chips Earned")
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()

@@ -175,8 +175,6 @@ class PokerPlayer:
             self.update_beliefs(belief_updating, table, nb_player)
 
         win_probability = self.get_win_probability(table, nb_player)
-        
-
         total_bet = current_bet  # Only bet for this round now
 
         # potential_loss = current_bet      # What you lose if you fold or lose after raising
@@ -236,7 +234,7 @@ class CPT:
         # Utility of folding (status quo)
         utility_fold = 0
         # utility_fold = utility_loss
-        
+
         # Decision based on higher utility
         decision = "Raise" if expected_utility_raise > utility_fold else "Fold"
         return decision
