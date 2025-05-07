@@ -1,0 +1,6 @@
+Player,Raises,Folds,Win Rate,Total Earnings,Avg Earnings (Per Round)
+Risk Averse,7.000000000000001,93.0,14.000000000000002,400,4.0
+Risk Seeking,34.0,66.0,24.0,-4600,-46.0
+Loss Averse,10.0,90.0,19.0,5900,59.0
+Optimistic,16.0,84.0,15.0,-7900,-79.0
+Rational,43.0,56.99999999999999,28.000000000000004,6200,62.0
