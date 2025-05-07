@@ -11,7 +11,7 @@ Clone the repository and install the dependencies:
 
 ```bash
 git clone https://github.com/MalaikaPK/Poker-Simulation.git
-cd poker-sim/poker-2.0
+cd Poker-Simulation
 pip install -r requirements.txt
 ```
 
