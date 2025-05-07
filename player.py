@@ -169,70 +169,6 @@ class PokerPlayer:
         # Update belief distribution
         self.belief_about_opponent = new_probs
 
-
-
-
-
-    # def update_beliefs(self, belief_updating, table):
-    #     if not belief_updating or not self.opponent_actions:
-    #         return  # Skip belief updating if not in PBE or no observations
-        
-    #     total_actions = len(self.opponent_actions)
-    #     raise_count = sum(1 for action in self.opponent_actions if action == "Raise")
-    #     fold_count = sum(1 for action in self.opponent_actions if action == "Fold")
-
-    #     if total_actions == 0:
-    #         return  # Avoid division by zero
-
-    #     # Estimate likelihoods based on observed frequencies
-    #     likelihood_raise = (raise_count + 1) / (total_actions + 2)
-    #     likelihood_fold = (fold_count + 1) / (total_actions + 2)
-
-
-    #     # # Apply CPT probability weighting to distort perceived likelihoods
-    #     weighted_likelihood_raise = self.cpt.probability_weighting(likelihood_raise, self.cpt.gamma)
-    #     weighted_likelihood_fold = self.cpt.probability_weighting(likelihood_fold, self.cpt.delta)
-
-    #     # Use stored prior or initialize at 0.5 if it's the first round
-    #     prior = getattr(self, "belief_about_opponent", 0.5)
-
-    #     # Apply distorted Bayesian rule
-    #     posterior_numerator = weighted_likelihood_raise * prior
-    #     posterior_denominator = (weighted_likelihood_raise * prior) + (weighted_likelihood_fold * (1 - prior))
-
-
-    #     # # Apply Bayes' rule
-    #     # posterior_numerator = likelihood_raise * prior
-    #     # posterior_denominator = (likelihood_raise * prior) + (likelihood_fold * (1 - prior))
-
-    #     if posterior_denominator > 0:
-    #         self.belief_about_opponent = posterior_numerator / posterior_denominator
-    #     else:
-    #         self.belief_about_opponent = prior  # Avoid NaN issues
-
-
-
-    # def update_beliefs(self):
-    #     """ Updates beliefs based on observed opponent actions using Bayes' rule. """
-    #     if not self.belief_updating or not self.opponent_actions:
-    #         return  # Skip belief updating if not in PBE or no observations
-        
-    #     # Count how often opponents raised
-    #     raise_count = sum(1 for action in self.opponent_actions if action == "Raise")
-    #     fold_count = sum(1 for action in self.opponent_actions if action == "Fold")
-
-    #     # Compute updated probability of opponent holding a strong hand
-    #     prior = 0.5  # Initial belief (neutral prior, can be improved)
-    #     likelihood_raise = 0.7  # Probability that a strong hand raises
-    #     likelihood_fold = 0.3   # Probability that a weak hand folds
-
-    #     # Apply Bayes' rule
-    #     updated_belief = (likelihood_raise * prior) / (
-    #         likelihood_raise * prior + likelihood_fold * (1 - prior)
-    #     )
-
-    #     # Store the new belief as the probability that an opponent is strong
-    #     self.belief_about_opponent = updated_belief
             
     def make_decision(self, table: PokerHand, nb_player, current_bet, belief_updating) -> str:
         if belief_updating:
@@ -240,24 +176,6 @@ class PokerPlayer:
 
         win_probability = self.get_win_probability(table, nb_player)
         
-        
-        # total_bet = 0
-        # small_blind = 50
-        # big_blind = 100
-        # total_bet = small_blind+ big_blind
-
-        # # Determine stage and set betting amount accordingly
-        # if len(table.cards) == 0:  # Pre-flop
-        #     current_bet = big_blind
-        # elif len(table.cards) <= 3:  # Flop
-        #     current_bet = big_blind * 1.5
-        # else:  # Turn or River
-        #     current_bet = big_blind * 3
-
-        # total_bet += current_bet
-
-        # # Pot includes everyone's bet
-        # total_pot = total_bet * nb_player
 
         total_bet = current_bet  # Only bet for this round now
 
@@ -296,7 +214,6 @@ class CPT:
             expected_utility_raise = win_probability * utility_gain + (1 - win_probability) * utility_loss
             # utility_fold = -potential_loss
             utility_fold = 0
-            # utility_fold= win_probability*utility_loss
 
             decision = "Raise" if expected_utility_raise > utility_fold else "Fold"
             return decision
@@ -317,17 +234,9 @@ class CPT:
 
         
         # Utility of folding (status quo)
-        # utility_fold = -potential_loss
         utility_fold = 0
         # utility_fold = utility_loss
-
-        # print("Weighted win prob:", weighted_win_prob)
-        # print("Weighted loss prob:", weighted_loss_prob)
-        # print("Utility gain:", utility_gain)
-        # print("Utility loss:", utility_loss)
-        # print("Expected utility of raise:", expected_utility_raise)
-        # print("Utility of fold:", utility_fold)
-
+        
         # Decision based on higher utility
         decision = "Raise" if expected_utility_raise > utility_fold else "Fold"
         return decision

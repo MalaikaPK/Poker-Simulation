@@ -105,23 +105,14 @@ if __name__ == '__main__':
     start_time = time.time()
     # Run the BNE version (fixed beliefs)
     print("\nRunning BNE Simulation...")
-    bne_results = simulate_poker_games(10, False)
+    bne_results = simulate_poker_games(1000, False)
     bne_results.print_results()
 
     # Run the PBE version (updated beliefs)
     print("\nRunning PBE Simulation...")
-    pbe_results = simulate_poker_games(10, True)
+    pbe_results = simulate_poker_games(1000, True)
     pbe_results.print_results()
 
     end_time = time.time()
     print(f"\nTotal Simulation Time: {end_time - start_time:.2f} seconds")
-
-#if __name__ == '__main__':
-   # game = init_game()
-
-    # Simulate poker games
-    #simulation_result: SimulationResult = simulate_poker_games(game, number_of_games=100)
-    #simulation_result.print_results()
-    
-    
 

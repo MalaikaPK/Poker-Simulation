@@ -6,6 +6,6 @@ authors:
   - family-names: "Malaika"
     given-names: "Pohl Khader"
 version: "1.0.0"
-date-released: "2025-04-24"
+date-released: "2025-05-07"
 license: "MIT"
-repository-code: "https://github.com/MalaikaPK/poker-sim"
+repository-code: "https://github.com/MalaikaPK/Poker-Simulation"

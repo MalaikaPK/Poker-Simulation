@@ -320,7 +320,7 @@ if __name__ == "__main__":
     pbe_avg = {ptype: np.mean(pbe_data[ptype]) for ptype in player_types}
 
     n_simulations = 10
-    rounds_per_sim = 10
+    rounds_per_sim = 100
 
     
     earnings_by_model_and_player = {
