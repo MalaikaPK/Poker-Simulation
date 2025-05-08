@@ -87,8 +87,11 @@ class PokerPlayer:
     def compute_action_likelihood(self, observed_action: str, table: PokerHand, nb_players: int) -> float:
         """
         Computes the denominator of the belief update equation:
-        \sum_{H_{-i}'} w_i(P(a_{-i}|H_{-i}', I_i)) * \mu_i(H_{-i}'|I_i)
+        ∑_{H_{-i}'} w_i(P(a_{-i} | H_{-i}', I_i)) * μ_i(H_{-i}' | I_i)
+        This is the total distorted likelihood of the observed action under all possible opponent hands,
+        weighted by the player's prior belief over those hands.
         """
+        
         action_likelihood = 0.0
 
         for hand_class, prior_prob in self.belief_about_opponent.items():
@@ -129,12 +132,21 @@ class PokerPlayer:
         return 1 / (1 + math.exp(-k * (win_prob - threshold))) 
     
     def estimate_win_probability_for_hand_class(self, hand_class, table: PokerHand, nb_players): 
-        '''
+        """
         Estimate P(win | H_{-i}, I_i): Objective win probability for the given hand class.
-        '''
+        """
         return self.get_win_probability(table, nb_players)
 
     def update_beliefs(self, belief_updating, table: PokerHand, nb_players: int):
+        """
+        Beliefs are updated using standard Bayesian formula with CPT distortion applied only to the likelihood of the observed action.
+        Numerator: distorted likelihood of action given hand H_{-i} * prior over H_{-i}
+        Denominator: sum over all H_{-i}' across all opponent hand classes
+        Return posterior μ_i(H_{-i} | a_{-i}, I_i)
+
+        This mirrors Equation 4.5 and 4.6 in my Thesis
+        
+        """
         if not belief_updating or not self.opponent_actions:
             return  # Skip belief updating if not in PBE or no observations
 
