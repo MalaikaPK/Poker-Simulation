@@ -3,7 +3,7 @@
 
 Bachelor Thesis - Malaika Pohl Khader
 
-Reprository for simulating a Limit Texas Hold'em Poker game for five player types under Bayesian Nash Equilibrium (BNE) and Perfect Bayesian Nash Equilibrium (PBE), evaluated with Cumulative Prospect Theory and statistical analysis.
+Reprository for simulating a Limit Texas Hold'em Poker game for five players under Bayesian Nash Equilibrium (BNE) and Perfect Bayesian Nash Equilibrium (PBE), evaluated with Cumulative Prospect Theory and statistical analysis.
 The following is an overview of the moodules in the project.
 
 ## Installation
@@ -75,6 +75,13 @@ The `chi_square_test.py` module handles the statistical analysis of the poker si
 - **Visualisations**: Generates bar charts and line plots to illustrate raise/fold percentages and win rates for each player type.
 
 This module is crucial for drawing insights from the simulation data and understanding the strategic behavior of players. To run the statistical tests, execute `python chi_square_test.py`. The simulation will run with the specified settings from the `poker_simulation.py` module as well as the tests from the `chi_square_test.py` module.
+
+
+
+---
+
+### 6. `tests.py`
+This module import the saved CSV files from `chi_square_test.py`, in order to make the statistical tests and regressions without running the whole simulation each time.
 
 
 
