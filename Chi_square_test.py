@@ -34,7 +34,6 @@ def compute_percentages(simulation_result):
         raise_pct = (raises / total_decisions) * 100 if total_decisions else 0
         fold_pct = (folds / total_decisions) * 100 if total_decisions else 0
         win_pct = (wins / total_decisions) * 100 if total_decisions else 0
-        # avg_earnings = simulation_result.earnings.get(player_obj, 0)
         avg_earnings = simulation_result.earnings.get(player_obj, 0)
         avg_earnings_round = sum(simulation_result.earnings_per_round.get(player_obj, [])) / len(simulation_result.earnings_per_round.get(player_obj, [])) if simulation_result.earnings_per_round.get(player_obj) else 0
         
@@ -104,8 +103,6 @@ def t_test_per_player_earnings(bne_results, pbe_results):
 
 def combine_results(bne_results, earnings_dict, pbe_results):
     # Create DataFrames
-    # bne_df = pd.DataFrame(bne_results, index=['Raises', 'Folds', 'Wins', 'Avg Earnings']).T
-    # pbe_df = pd.DataFrame(pbe_results, index=['Raises', 'Folds', 'Wins', 'Avg Earnings']).T
     bne_df = pd.DataFrame(bne_results, index=['Raises (%)', 'Folds (%)', 'Win Rate (%)']).T
     bne_df['Avg Earnings'] = bne_df.index.map(lambda player: earnings_dict.get(player, 0))
     pbe_df = pd.DataFrame(pbe_results, index=['Raises (%)', 'Folds (%)', 'Win Rate (%)']).T
@@ -125,7 +122,7 @@ def combine_results(bne_results, earnings_dict, pbe_results):
 
     return combined_df
 
-
+# Regressions, not used for latex tables but tests
 def run_regression_interaction_1(combined_df):
     X = combined_df[["Win Rate (%)", "PBE", "win_raise_interaction", "Intercept"]]
     y = combined_df["Avg Earnings"]
@@ -135,7 +132,7 @@ def run_regression_interaction_1(combined_df):
 
 def run_regression(results, earnings_dict):
     """
-    Run a regression to analyze how different player types influence win rates.
+    Run a regression to analyse how different players influence win rates.
     """
     df = pd.DataFrame(results, index=['Raises (%)', 'Folds (%)', 'Win Rate (%)']).T
     df['Avg Earnings'] = df.index.map(lambda player: earnings_dict.get(player, 0))
@@ -148,9 +145,8 @@ def run_regression(results, earnings_dict):
 
 def run_regression_interaction(results, earnings_dict, is_pbe):
     """
-    Run a regression to analyze how different player types influence win rates.
+    Run a regression to analyse how different players influence win rates.
     """
-    # df = pd.DataFrame(results, index=['Raises', 'Folds', 'Wins', 'Avg Earnings']).T
     df = pd.DataFrame(results, index=['Raises (%)', 'Folds (%)', 'Win Rate (%)']).T
     df['Avg Earnings'] = df.index.map(lambda player: earnings_dict.get(player, 0))
 
@@ -192,18 +188,9 @@ def cohen_d(a, b):
     pooled_std = np.sqrt(((a.std(ddof=1) ** 2) + (b.std(ddof=1) ** 2)) / 2)
     return (a.mean() - b.mean()) / pooled_std if pooled_std > 0 else 0.0
 
-# def print_results(results, label=""):
-#     """ Print formatted table of poker simulation results. """
-#     df = pd.DataFrame(results, index=['Raises (%)', 'Folds (%)', 'Win Rate (%)', 'Avg Earnings']).T
-#     print(f"\nPoker Simulation Results ({label}):\n", df)
-
-
-
 def print_results(results, earnings, avg_earnings_per_round, label=""):
     """ Print formatted table of poker simulation results. """
     player_results = []
-    # avg_earnings = earnings.get(player_name, 0)  # Default earnings to 0 if not found
-    # avg_earnings_round = avg_earnings_per_round.get(player_name, 0)  # Default to 0 if not found
     
     for player_name, (raise_pct, fold_pct, win_pct) in results.items():
         avg_earnings = earnings.get(player_name, 0)  # Default earnings to 0 if not found
@@ -219,7 +206,7 @@ def print_results(results, earnings, avg_earnings_per_round, label=""):
     
     df = pd.DataFrame(player_results)
     print(f"\nPoker Simulation Results ({label}):\n", df)
-    # Save the dataframe to a CSV file
+    # Save the dataframe to a CSV file used for tests.py
     csv_filename = f"poker_simulation_results_{label}.csv"
     df.to_csv(csv_filename, index=False)
     return csv_filename
@@ -329,7 +316,7 @@ if __name__ == "__main__":
     }
 
 
-    all_player_stats = []  # For the big CSV with percentages + earnings
+    all_player_stats = []  # For the big CSV with percentages + earnings. Also used for tests.py.
 
     for i in range(n_simulations):
         print(f"Simulation {i+1}/{n_simulations}", end='\r')
@@ -384,7 +371,7 @@ if __name__ == "__main__":
 
     print("\nSaved full player stats to 'player_stats_per_simulation.csv'")
 
-    # Optional: save raw earnings separately for bootstraps or t-tests
+    # Save raw earnings separately for bootstraps or t-tests
     raw_earnings_records = []
     for model in ['BNE', 'PBE']:
         for player, earning_list in earnings_by_model_and_player[model].items():
@@ -404,66 +391,10 @@ if __name__ == "__main__":
 
  
 
-
-    # for _ in range(n_simulations):
-    #     # BNE
-    #     simulation_bne = simulate_poker_games(rounds_per_sim, belief_updating=False)
-    #     _, _, earnings_bne, _ = compute_percentages(simulation_bne)
-    #     for ptype in player_types:
-    #         bne_data[ptype].append(earnings_bne.get(ptype, 0))
-    #         earnings_by_model_and_player['BNE'][ptype].append(earnings_bne.get(ptype, 0))
-
-    #     # PBE
-    #     simulation_pbe = simulate_poker_games(rounds_per_sim, belief_updating=True)
-    #     _, _, earnings_pbe, _ = compute_percentages(simulation_pbe)
-    #     for ptype in player_types:
-    #         pbe_data[ptype].append(earnings_pbe.get(ptype, 0))
-    #         earnings_by_model_and_player['PBE'][ptype].append(earnings_pbe.get(ptype, 0))
-
-
-
-    # for i in range(n_simulations):
-    #     print("\nRunning BNE Simulation...")
-    #     simulation_bne = simulate_poker_games(10, belief_updating=False)
-    #     bne_results, bne_observed, bne_earnings, bne_avg_earnings_per_round = compute_percentages(simulation_bne)
-    
-    #     #_, _, earnings, _ = compute_percentages(simulation_result)
-    #     for player_name, earning in earnings.items():
-    #         earnings_by_model_and_player['BNE'][player_name].append(earning)
-
-    #     print("\nRunning PBE Simulation...")
-    #     simulation_pbe = simulate_poker_games(10, belief_updating=True)
-    #     pbe_results, pbe_observed, pbe_earnings, pbe_avg_earnings_per_round = compute_percentages(simulation_pbe)
-    #     #_, _, earnings, _ = compute_percentages(simulation_result)
-    #     for player_name, earning in earnings.items():
-    #         earnings_by_model_and_player['PBE'][player_name].append(earning)
-
-    # Save earnings per simulation to CSV
-    # records = []
-    # for model in ['BNE', 'PBE']:
-    #     for player, earning_list in earnings_by_model_and_player[model].items():
-    #         for e in earning_list:
-    #             records.append({
-    #                 'Model': model,
-    #                 'Player': player,
-    #                 'Earnings': e
-    #             })
-
-    # earnings_df = pd.DataFrame(records)
-    # earnings_df.to_csv("earnings_raw_per_simulation.csv", index=False)
-
-    # print("\nRunning BNE Simulation...")
-    # simulation_bne = simulate_poker_games(100, belief_updating=False)
-    # bne_results, bne_observed, bne_earnings, bne_avg_earnings_per_round = compute_percentages(simulation_bne)
-
-    # print("\nRunning PBE Simulation...")
-    # simulation_pbe = simulate_poker_games(100, belief_updating=True)
-    # pbe_results, pbe_observed, pbe_earnings, pbe_avg_earnings_per_round = compute_percentages(simulation_pbe)
-    
     
     combined_player_data = []
 
-    # Now you use bne_earnings and pbe_earnings to get the earnings data
+    # Use bne_earnings and pbe_earnings to get the earnings data
     for strategy_label, results, earnings_dict in [("BNE", bne_results, bne_earnings), ("PBE", pbe_results, pbe_earnings)]:
         for player_name, (raise_pct, fold_pct, win_pct) in results.items():
             avg_earnings = earnings_dict.get(player_name, 0)
@@ -479,41 +410,13 @@ if __name__ == "__main__":
     combined_df = pd.DataFrame(combined_player_data)
     combined_df = combined_df.dropna()
 
-
-
-
-    # # Extract BNE and PBE groups
-    # bne_data = combined_df[combined_df['Strategy'] == 'BNE']['Raises (%)']
-    # pbe_data = combined_df[combined_df['Strategy'] == 'PBE']['Raises (%)']
-
-    # # Perform a t-test
-    # t_stat, p_value = stats.ttest_ind(bne_data, pbe_data)
-    # print(f"T-statistic: {t_stat}")
-    # print(f"P-value: {p_value}")
-
-
-    # # T-Test for BNE vs PBE Raise Percentages
-    # bne_raises = [bne_results[player][0] for player in bne_results]
-    # pbe_raises = [pbe_results[player][0] for player in pbe_results]
-    # t_stat, p_value = stats.ttest_rel(bne_raises, pbe_raises)
-    # print(f"T-Test for BNE vs PBE Raise Percentages: t-stat={t_stat:.4f}, p-value={p_value:.4f}")
-
-    #Chi-Square Test for Raise/Fold Distributions Player types
+    #Chi-Square Test for Raise/Fold Distributions Players
     chi_square_test(bne_observed, label="BNE")
-    # compute_confidence_intervals(simulation_bne, 100, label="BNE")
+    compute_confidence_intervals(simulation_bne, 100, label="BNE")
 
     chi_square_test(pbe_observed, label="PBE")
-    # compute_confidence_intervals(simulation_pbe, 100, label="PBE")
-
-
-    # # Non-parametric test for raise frequencies between BNE and PBE
-    # bne_raises = [bne_results[player][0] for player in bne_results]
-    # pbe_raises = [pbe_results[player][0] for player in pbe_results]
-
-    # stat, p_value = mannwhitneyu(bne_raises, pbe_raises)
-    # print(f"Mann-Whitney U Test for BNE vs PBE Raise Percentages: stat={stat:.4f}, p-value={p_value:.4f}")
-
-    # ANOVA for Player Type Differences in Raising Frequency
+    compute_confidence_intervals(simulation_pbe, 100, label="PBE")
+    # ANOVA for Player Differences in Raising Frequency
     player_types = {}
     for player in bne_results:
         if player not in player_types:
@@ -524,7 +427,7 @@ if __name__ == "__main__":
     f_stat, anova_p_value = stats.f_oneway(*player_types.values())
     print(f"ANOVA for Player Type Differences: F-stat={f_stat:.4f}, p-value={anova_p_value:.4f}")
 
-    # Tukey's HSD for Player Type Comparisons
+    # Tukey's HSD for Player Comparisons
     all_raises = []
     labels = []
     for player, raises in player_types.items():
@@ -572,72 +475,27 @@ if __name__ == "__main__":
     print(f"Chi-Square Test for Raise/Fold: chi2={chi2_stat:.4f}, p-value={chi2_p_value:.4f}")
 
 
-    # # T-Test for earnings (BNE vs PBE)
-    # bne_payoffs = list(bne_earnings.values())
-    # pbe_payoffs = list(pbe_earnings.values())
-
-    # t_stat_payoff, p_value_payoff = stats.ttest_rel(bne_payoffs, pbe_payoffs)
-    # print(f"T-Test on Earnings (BNE vs PBE): t-stat={t_stat_payoff:.4f}, p-value={p_value_payoff:.4f}")
-    
-    # stat, p = levene(list(bne_earnings.values()), list(pbe_earnings.values()))
-    # print(f"Levene's test for earnings variance: stat={stat:.4f}, p={p:.4f}")
-
-    # # Levene's test for equality of variances
-    # stat, p_value = levene(bne_payoffs, pbe_payoffs)
-    # print(f"Levene's test for equality of variances: stat={stat:.4f}, p-value={p_value:.4f}")
-
-
-
+    # Plot Results for Tables
     print_results(bne_results, bne_earnings, bne_avg_earnings_per_round, label="BNE")
     plot_results(bne_results, title="BNE Results")
 
     print_results(pbe_results, pbe_earnings, pbe_avg_earnings_per_round, label="PBE")
     plot_results(pbe_results, title="PBE Results")
 
-    
+
     plot_earnings(bne_earnings, pbe_earnings, title="Average Earnings Comparison (BNE vs PBE)")
 
-    # run_regression(bne_results, earnings_dict)
-    # run_regression(pbe_results, earnings_dict)
-
-    # # Run regression with interaction terms for both BNE and PBE results
-    # run_regression_interaction(bne_results, earnings_dict, is_pbe=False)
-    # run_regression_interaction(pbe_results, earnings_dict, is_pbe=True)
-
-    # # Combine BNE and PBE results and run regression with interaction on the combined data
-    # combined = combine_results(bne_results, earnings_dict, pbe_results)
-    # run_regression_interaction_1(combined)
-
-
-    # d_stat = cohen_d(bne_raises, pbe_raises)
-    # print(f"Cohen's d (effect size) for Raise Percentages: {d_stat:.4f}")
-
-    # d_stat = cohen_d(bne_observed, pbe_observed)
-    # print(f"Cohen's d (effect size) for Earnings: {d_stat:.4f}")
-
-    # p_values = [chi2_p_value, t_stat_payoff]  # List of p-values from tests
-    # corrected_p_values = multipletests(p_values, method='bonferroni')[1]
-    # print(f"Corrected P-Values: {corrected_p_values}")
-
-    # t_test_per_player(bne_results, pbe_results)
-    # t_test_per_player_earnings(bne_results, pbe_results)
-
-    # t_tests_within_equilibrium(bne_results, label="BNE")
-    # t_tests_within_equilibrium(pbe_results, label="PBE")
-
-
-    print("\nCohen's d for BNE Earnings Between Player Types:")
+    # Cohen's d for Earnings
+    print("\nCohen's d for BNE Earnings Between Players:")
     for p1, p2 in combinations(bne_results.keys(), 2):
         d = cohen_d(bne_results[p1], bne_results[p2])
         print(f"{p1} vs {p2}: d={d:.3f}")
 
-    print("\nCohen's d for PBE Earnings Between Player Types:")
+    print("\nCohen's d for PBE Earnings Between Players:")
     for p1, p2 in combinations(pbe_results.keys(), 2):
         d = cohen_d(pbe_results[p1], pbe_results[p2])
         print(f"{p1} vs {p2}: d={d:.3f}")
 
-
-
-
+    # Time
     end_time = time.time()
     print(f"\nTotal Simulation Time: {end_time - start_time:.2f} seconds")

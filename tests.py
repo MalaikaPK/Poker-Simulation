@@ -13,9 +13,15 @@ import matplotlib.pyplot as plt
 from statsmodels.stats.anova import anova_lm
 from statsmodels.iolib.summary2 import summary_col
 
+"""
+This module includes several statistical tests, although, not all are used in the analysis.
+When running the Chi_square_test.py file, the results extracted from poker_simulation.py are saved in CSV files.
+Note, that when running it, the CSV files are overwritten if not named something different in between the simulations,
+why the CSV files not include all raw results from the main and robustness simulations.
+Regressions etc. will also be overwritten if not saved separately.
+"""
 
-
-# === Load Simulation Results ===
+# Load simulation results from Chi_square_test.py
 file_path_bne = '/Users/Malaika/Desktop/BA Projekt/Python/poker-sim-master/poker_simulation_results_BNE.csv'
 file_path_pbe = '/Users/Malaika/Desktop/BA Projekt/Python/poker-sim-master/poker_simulation_results_PBE.csv'
 file_path_earnings = '/Users/Malaika/Desktop/BA Projekt/Python/poker-sim-master/earnings_raw_per_simulation.csv'
@@ -29,7 +35,7 @@ results_raw= pd.read_csv(file_path_raw)
 print("Simulation Results BNE:\n", results_bne)
 print("\nSimulation Results PBE:\n", results_pbe)
 
-# === Linear Regression on Earnings ===
+# Linear Regression on Earnings
 print("\n--- Linear Regression ---")
 results_bne['Model'] = 'BNE'
 results_pbe['Model'] = 'PBE'
@@ -50,7 +56,7 @@ results_pbe = results_pbe.rename(columns={
     'Win Rate': 'WinRate'
 })
 
-# Now combine the datasets
+# Combine the datasets
 combined = pd.concat([results_bne, results_pbe])
 
 
@@ -82,47 +88,51 @@ results_raw['Player'] = pd.Categorical(results_raw['Player'],
 
 
 
+"""
+Several regressions. Not all are used for Latex tables.
+"""
 
+# Earnings explained by model, win rate, and raises
 model1 = smf.ols("Earnings ~ C(Model) * WinRate + Raises", data=results_raw).fit()
 print("\nEarnnings Model Win interaction:")
 print(model1.summary())
 
-# Example regression: Earnings explained by model and player type
+# Earnings explained by players
 model = smf.ols("Earnings ~ C(Player)", data=results_raw).fit()
 print("\nTotal Earnings Player:")
 print(model.summary())
 
-# Example regression: Earnings explained by model and player type
+# Win Rate explained by players
 model2 = smf.ols("WinRate ~ C(Player)", data=results_raw).fit()
 print("\nWin Rate Player:")
 print(model2.summary())
 
-
+# Earnings by raises, win rate and model
 model_total = smf.ols('Earnings ~ Raises + WinRate + C(Model)', data=results_raw).fit()
 print("\nTotal Earnings Regression:")
 print(model_total.summary())
 
-#Main from methodology
+# Average earnings by raises, win rate and model.
 model_avg = smf.ols('EarningsPerRound ~ Raises + WinRate + C(Model)', data=results_raw).fit()
 print("\nAvg Earnings Per Round Regression:")
 print(model_avg.summary())
 
 
-#win rate
+# Win rate by raises and avg earnings. 
 model_winrate = smf.ols('WinRate ~ Raises + EarningsPerRound', data=results_raw).fit()
 print("\nWin Rate Regression:")
 print(model_winrate.summary())
 
 
-#interaction term
+# Avg earningns by model, players, and raises. 
 model_simple = smf.ols('EarningsPerRound ~ C(Model) * C(Player) + C(Model) + Raises', data=results_raw).fit()
 print("\nEarningsPerRound with Model interaction:")
 print(model_simple.summary())
 
 
-#interaction term
+# Win Rate by avg earnings and player.
 model_int = smf.ols('WinRate ~ EarningsPerRound * C(Player) + EarningsPerRound', data=results_raw).fit()
-print("\nEarningsPerRound with Model interaction: 2")
+print("\Win Rate with player interaction")
 print(model_int.summary())
 
 
@@ -134,7 +144,7 @@ print("\nModel Comparison (Additive vs. Interaction):")
 print(anova_results)
 
 
-# === Per-Player Paired T-Tests ===
+# Per-Player Paired T-Tests
 print("\n--- Per-Player T-Tests ---")
 for player in combined['Player'].unique():
     bne_total = combined[(combined['Player'] == player) & (combined['Model'] == 'BNE')]['Earnings']
@@ -146,7 +156,6 @@ for player in combined['Player'].unique():
     if len(bne_total) == len(pbe_total) and len(bne_total) > 1:
         t_total, p_total = ttest_rel(bne_total, pbe_total)
         t_round, p_round = ttest_rel(bne_avg, pbe_avg)
-        # Replace this in your loop:
         t_total, p_total = wilcoxon(bne_total, pbe_total)
         t_round, p_round = wilcoxon(bne_avg, pbe_avg)
         print(f"{player}:")
@@ -162,11 +171,10 @@ for player in combined['Player'].unique():
 
 def chi_square_test(df, label="", print_expected=False):
     """
-    Perform a Chi-Square test for independence on categorical data in a dataframe.
+    Perform Chi-Square test for independence on categorical data in a dataframe.
     
     Parameters:
     - df: DataFrame containing categorical data (e.g., Player, Raises, Folds)
-    - label: Optional label to describe the test
     - print_expected: If True, prints the expected frequencies
     """
     # Convert the categorical columns into a contingency table
@@ -182,12 +190,12 @@ def chi_square_test(df, label="", print_expected=False):
         print(f"ERROR in Chi-Square test ({label}): {e}")
 
 
-# Combine the results if you want to analyze both models together
+# Combine the results to analyse both models together
 results_bne['Model'] = 'BNE'
 results_pbe['Model'] = 'PBE'
 combined = pd.concat([results_bne, results_pbe])
 
-# For example, testing "Raises" by Player type (you can replace 'Raises' with 'Folds' if needed)
+# Testing "Raises" by Players
 chi_square_test(combined, label="Raises by Player Type", print_expected=True)
 
 # Perform the ANOVA test for "EarningsPerRound"
@@ -225,7 +233,7 @@ for metric in metrics:
     print(f"\n{metric} (PBE):\n  T-test: t = {t_stat_pbe:.4f}, p = {p_val_pbe:.5f}\n  Mann-Whitney U: U = {u_stat_pbe}, p = {p_u_pbe:.5f}")
 
 
-# === Proportion Test: Raise vs Fold Proportions by Model ===
+# Proportion Test: Raise vs Fold Proportions by Model
 print("\n--- Proportion Test: Raise vs. Fold by Model ---")
 combined['Action'] = np.where(combined['Raises'] > 0, 'Raise', 'Fold')
 action_counts = pd.crosstab(combined['Model'], combined['Action'])
@@ -239,14 +247,14 @@ else:
     print(f"Chi² = {chi2:.4f}, p = {p_chi:.5f} {'✅' if p_chi < 0.05 else '❌'}")
 
 
-# === Shapiro-Wilk Normality Test on Earnings ===
+# Shapiro-Wilk Normality Test on Earnings 
 print("\n--- Shapiro-Wilk Normality Test ---")
 for model in ['BNE', 'PBE']:
     stat, p = stats.shapiro(combined[combined['Model'] == model]['Earnings'])
     print(f"{model}: W = {stat:.4f}, p = {p:.5f} {'✅' if p > 0.05 else '❌'}")
 
 
-# === Levene's Test ===
+# Levene's Test
 print("\n--- Levene's Test for Equal Variance ---")
 stat, p = stats.levene(
     combined[combined['Model'] == 'BNE']['Earnings'],
@@ -255,7 +263,7 @@ stat, p = stats.levene(
 print(f"Levene's Test: F = {stat:.4f}, p = {p:.5f} {'✅' if p > 0.05 else '❌'}")
 
 
-# === Effect Size: Cohen's d ===
+# Effect Size: Cohen's d
 def cohens_d(x, y):
     nx, ny = len(x), len(y)
     pooled_std = np.sqrt(((nx - 1)*np.std(x, ddof=1)**2 + (ny - 1)*np.std(y, ddof=1)**2) / (nx + ny - 2))
@@ -269,7 +277,7 @@ d = cohens_d(
 print(f"Cohen's d: {d:.4f}")
 
 
-# === Bootstrapped Confidence Interval ===
+# Bootstrapped Confidence Interval
 print("\n--- Bootstrapped 95% CI for Mean Earnings ---")
 def bootstrap_ci(data, n_boot=1000, ci=95):
     means = [np.mean(np.random.choice(data, size=len(data), replace=True)) for _ in range(n_boot)]
@@ -300,7 +308,7 @@ def bootstrap_ci(data, n_bootstrap=10000, ci=0.95):
 
 
 
-# === Subgroup t-tests, effect sizes, and CIs ===
+# Subgroup t-tests, effect sizes, and CIs
 player_types = earnings_raw['Player'].unique()
 
 
@@ -321,42 +329,42 @@ for player in player_types:
     ci_pbe = bootstrap_ci(earnings_pbe)
 
 
-# T-test for comparing earnings between BNE and PBE for each player type
+# T-test for comparing earnings between BNE and PBE for each player
 for player_type in earnings_raw['Player'].unique():
     earnings_bne = earnings_raw[(earnings_raw['Model'] == 'BNE') & (earnings_raw['Player'] == player_type)]['Earnings']
     earnings_pbe = earnings_raw[(earnings_raw['Model'] == 'PBE') & (earnings_raw['Player'] == player_type)]['Earnings']
  
 
-# ANOVA for earnings by player type
+# ANOVA for earnings by players
 earnings_by_type = [results_raw[results_raw['Player'] == ptype]['Earnings'] for ptype in player_types]
 f_stat, p_val = f_oneway(*earnings_by_type)
 print(f"ANOVA for earnings by player type: F-statistic = {f_stat}, p-value = {p_val}")
 
-# ANOVA for Winrate by player type
+# ANOVA for Winrate by players
 earnings_by_type = [results_raw[results_raw['Player'] == ptype]['WinRate'] for ptype in player_types]
 f_stat, p_val = f_oneway(*earnings_by_type)
 print(f"ANOVA for WinRate by player type: F-statistic = {f_stat}, p-value = {p_val}")
 
 
-# Mann-Whitney U test between BNE and PBE for a specific player type
+# Mann-Whitney U test between BNE and PBE for a specific player
 player_type = 'Rational'  # This can be changed as needed
 earnings_bne = results_raw[(results_raw['Model'] == 'BNE') & (results_raw['Player'] == player_type)]['Earnings']
 earnings_pbe = results_raw[(results_raw['Model'] == 'PBE') & (results_raw['Player'] == player_type)]['Earnings']
 u_stat, p_val = mannwhitneyu(earnings_bne, earnings_pbe)
 print(f"Mann-Whitney U Test for {player_type} earnings: U-statistic = {u_stat}, p-value = {p_val}")
 
-# Wilcoxon test for paired data (BNE vs PBE for a player type)
+# Wilcoxon test for paired data (BNE vs PBE for a player)
 earnings_bne = results_raw[(results_raw['Model'] == 'BNE') & (results_raw['Player'] == player_type)]['Earnings']
 earnings_pbe = results_raw[(results_raw['Model'] == 'PBE') & (results_raw['Player'] == player_type)]['Earnings']
 w_stat, p_val = wilcoxon(earnings_bne, earnings_pbe)
 print(f"Wilcoxon Signed-Rank Test for {player_type} earnings: w-statistic = {w_stat}, p-value = {p_val}")
 
-# Tukey HSD test for pairwise comparisons between player types' earnings
+# Tukey HSD test for pairwise comparisons between players' earnings
 model_data = pd.concat([results_raw[['Earnings']], results_raw['Player']], axis=1)  # Concatenate player types
 tukey_results = pairwise_tukeyhsd(endog=model_data['Earnings'], groups=model_data['Player'], alpha=0.05)
 print(tukey_results)
 
-# Cohen's d for effect size between two groups (BNE vs PBE for a player type)
+# Cohen's d for effect size between two groups (BNE vs PBE for a player)
 from statsmodels.stats.weightstats import DescrStatsW
 bne_stats = DescrStatsW(earnings_bne)
 pbe_stats = DescrStatsW(earnings_pbe)
@@ -386,24 +394,30 @@ for metric in metrics:
     print(f"{metric} - t = {t_stat_pbe:.4f}, p = {p_val_pbe:.4f} | U = {u_stat_pbe:.4f}, p = {u_p_val_pbe:.4f}")
 
 
+"""
+More regressions.
+"""
 
+# Earnings by win rate and player.
 model = smf.ols('Earnings ~ WinRate * C(Player)', data=results_raw).fit()
 anova_table = sm.stats.anova_lm(model, typ=2)
 print(anova_table)
 
 
+# Earnings by raises and players.
 model = smf.ols('Earnings ~ Raises * C(Player)', data=results_raw).fit()
 anova_table = sm.stats.anova_lm(model, typ=2)
 print(anova_table)
 
 
+#Earnings by model and players.
 model = smf.ols('Earnings ~ C(Model) * C(Player)', data=results_raw).fit()
 anova_table = sm.stats.anova_lm(model, typ=2)
 print(anova_table)
 
 
 
-# Create the summary table with all the customizations
+# Create the summary table with all customisations
 summary = summary_col(
     [model1, model, model2, model_winrate, model_int, model_avg, model_simple],
     stars=True,
@@ -427,12 +441,13 @@ summary = summary_col(
 # Print to console
 print(summary)
 
-# Save to LaTeX
+# Save to LaTeX file. 
+# A new file regression_table.tex will occur to copy into LaTeX (although not pretty so must be costumised in LaTeX)
 with open("regression_table.tex", "w") as f:
     f.write(summary.as_latex())
 
 
-# Subset for Rational players
+# Subset for Rational player
 rational_bne = results_raw[(results_raw['Model'] == 'BNE') & (results_raw['Player'] == 'Rational')]
 rational_pbe = results_raw[(results_raw['Model'] == 'PBE') & (results_raw['Player'] == 'Rational')]
 
@@ -476,28 +491,43 @@ print(f"Paired t-test on WinRate (Rational): t = {t_stat:.4f}, p = {p_val:.4f}")
 
 rational_data = results_raw[results_raw['Player'] == 'Rational']
 
+"""
+ANOVA and models
+"""
+
+# Avg earnings by model and raises.
 model = smf.ols('EarningsPerRound ~ C(Model) * Raises', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
 
+# Win rate by avg earnings and raises.
 model = smf.ols('WinRate ~ EarningsPerRound * Raises', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
 
-
+# Raises by avg earnings and win rate
 model = smf.ols('Raises ~ EarningsPerRound * WinRate', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
 
+# Avg earnings by raises
 model = smf.ols('EarningsPerRound ~ Raises', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
 
+# Avg earnings by win rate
 model = smf.ols('EarningsPerRound ~ WinRate', data=rational_data).fit()
 anova_results = sm.stats.anova_lm(model, typ=2)
 print(anova_results)
 
 
+
+"""
+Manual tables for eanings results.
+Note that these tables are similar to the ones in Chi_square_test.py, however they are based on total earnings.
+These are based on average earnings, abstracted from the performance results used in the Analysis.
+To ensure proper figures without running the simulation and overwrite previous results, I made new manual figures.
+"""
 
 # Define custom colors
 copenhagen_red = "#990000"

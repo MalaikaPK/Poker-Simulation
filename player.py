@@ -4,6 +4,7 @@ from functools import lru_cache
 from joblib import Parallel, delayed
 from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rate
 
+# Priors drawn from a Monte Carlo Simulation
 hand_distributions = {
     "highest card": 0.1766613,
     "pair": 0.4483240,
@@ -26,17 +27,12 @@ class PokerPlayer:
         self.cpt = cpt
         self.hand = PokerHand()
         self.decisions = {"Raise": 0, "Fold": 0}  
-        #self.belief_updating = belief_updating  # Flag for PBE
+    
         self.opponent_actions = []  # Store opponent actions to update beliefs
-        # self.belief_about_opponent = 0.5
         self.total_contribution = 0  # Will be updated by PokerGame each round
         self.active_players = active_players or []
-
-       # Initialize opponent's prior beliefs from hand_distributions
         self.opponent_hand_class_probs = hand_distributions.copy()  # Set the priors directly from the hand_distributions
-
-        # This will store the updated beliefs (posterior)
-        self.belief_about_opponent = {}  # Posterior beliefs
+        self.belief_about_opponent = {}  # Store Posterior beliefs
         
 
     
@@ -58,17 +54,16 @@ class PokerPlayer:
         hole_card = [c.to_pypokercard() for c in self.hand.cards]
         community_card = [c.to_pypokercard() for c in table.cards]
 
-        # Determine number of simulations based on the game stage
+        # Determine number of simulations based on the game stage.
         nb_simulation = (
             500 if len(table.cards) == 0 else
             1_000 if len(table.cards) <= 3 else
             1_500
         )
-
-        # Run Monte Carlo simulations in parallel
+        # Run Monte Carlo simulations in parallel to increase speed
         win_prob = self.parallel_monte_carlo(nb_simulation, nb_player, hole_card, community_card)
 
-        # Store in cache
+        # Store in cache to increase speed
         self.win_probability_cache[cache_key] = win_prob
         return win_prob
 
@@ -90,17 +85,24 @@ class PokerPlayer:
     
 
     def compute_action_likelihood(self, observed_action: str, table: PokerHand, nb_players: int) -> float:
+        """
+        Computes the denominator of the belief update equation:
+        \sum_{H_{-i}'} w_i(P(a_{-i}|H_{-i}', I_i)) * \mu_i(H_{-i}'|I_i)
+        """
         action_likelihood = 0.0
 
         for hand_class, prior_prob in self.belief_about_opponent.items():
-            # Estimate win probability for this hand class
+            # Estimate win probability for hand class, already presented by prior_prob
+            # \mu_i(H_{-i}' | I_i): prior belief over opponent's hand class
+
+            # Estimate P(win | H_{-i}', I_i)
             win_prob = self.estimate_win_probability_for_hand_class(hand_class, table, nb_players)
 
-            # Apply CPT distortion to win probability (if applicable)
+            # Apply CPT distortion to win probability, w_i(P(...))
             if self.cpt:
                 win_prob = self.cpt.probability_weighting(win_prob, self.cpt.gamma)
 
-            # Calculate action likelihood based on distorted win probability
+            # P(a_{-i} | H_{-i}', I_i), Calculate action likelihood based on distorted win probability given opponent's type
             p_raise_given_class = self.raise_probability_given_winrate(win_prob)
 
             if observed_action == "Raise":
@@ -110,22 +112,26 @@ class PokerPlayer:
             else:
                 continue  # skip unsupported actions
 
-            # Weight by the prior probability of the hand class
+            # Accumulate likelihood, weighted by the prior probability of the hand class, \mu_i(H_{-i}'|I_i) * w_i(P(a_{-i}|H_{-i}', I_i))
             action_likelihood += prior_prob * likelihood
 
+        # Return full denominator
         return action_likelihood
 
     
     # Logistic function to map a probability of how good hand is, into an action likelihood
     def raise_probability_given_winrate(self, win_prob, k=10, threshold=0.5): 
         '''
-        Rational Logistic raise probability based on objectiv win rates.
+        P(a_{-i} = Raise | H_{-i}, I_i), Logistic raise probability based on objectiv win rates. 
         k: steepness of decision threshold, higher implies sharper.
         threshold: win rates at indifference, at which raise probability = 0.5
         '''
         return 1 / (1 + math.exp(-k * (win_prob - threshold))) 
     
     def estimate_win_probability_for_hand_class(self, hand_class, table: PokerHand, nb_players): 
+        '''
+        Estimate P(win | H_{-i}, I_i): Objective win probability for the given hand class.
+        '''
         return self.get_win_probability(table, nb_players)
 
     def update_beliefs(self, belief_updating, table: PokerHand, nb_players: int):
@@ -137,36 +143,39 @@ class PokerPlayer:
         if observed_action not in {"Raise", "Fold"}:
             return  # Skip if unsupported action
 
-        # Compute denominator of Bayes' Rule (normalizer)
+        # Compute denominator of Bayes' Rule (normalizer): \sum w_i(P(a_{-i}|H_{-i}', I_i)) * \mu_i(H_{-i}'|I_i)
         normalizer = self.compute_action_likelihood(observed_action, table, nb_players)
         if normalizer == 0:
             return  # Avoid division by zero
 
         new_probs = {}
         for hand_class, prior_prob in self.opponent_hand_class_probs.items():
-            # Estimate win probability for this hand class
+            # \mu_i(H_{-i} | I_i): prior belief over opponent hand class
+            # Already given by `prior_prob`
+
+            # Estimate win probability for this hand class, H_{-i}
             win_prob = self.estimate_win_probability_for_hand_class(hand_class, table, nb_players)
 
-            # Apply CPT distortion if needed
+            # Apply CPT distortion to the likelihood: w_i(P(a_{-i} | H_{-i}, I_i))
             if self.cpt:
                 win_prob = self.cpt.probability_weighting(win_prob, self.cpt.gamma)
 
-            # Estimate likelihood of the observed action given this hand class
+            # Estimate likelihood of the observed action given this hand class: P(a_{-i} | H_{-i}, I_i), Modeled using a logistic function over win_prob
             if observed_action == "Raise":
                 likelihood = self.raise_probability_given_winrate(win_prob)
             elif observed_action == "Fold":
                 likelihood = 1 - self.raise_probability_given_winrate(win_prob)
 
-            # Bayesian update
+            # Bayesian update. Numerator: w_i(P(a_{-i}|H_{-i}, I_i)) * \mu_i(H_{-i}|I_i)
             posterior = (likelihood * prior_prob) / (normalizer + 1e-10)
             new_probs[hand_class] = posterior
 
-        # Normalize the posterior probabilities
+        # Normalise the posterior probabilities, \tilde\mu_i(...)
         total_prob = sum(new_probs.values())
         for hand_class in new_probs:
             new_probs[hand_class] /= total_prob
 
-        # Update belief distribution
+        # Update belief distribution, \tilde\mu_i(H_{-i}| I_i, a_{-i})
         self.belief_about_opponent = new_probs
 
             

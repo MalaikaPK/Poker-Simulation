@@ -34,7 +34,7 @@ This module abstracts the card manipulation logic, providing a clean structure f
 ### 2. `player.py`
 The `player.py` module defines the `PokerPlayer` class and implements decision-making based on Cumulative Prospect Theory (CPT) alongside Bayesian Nash Equilibrium (BNE) and Perfect Bayesian Equilibrium (PBE). 
 The module simulates a poker player’s decision-making, incorporating Monte Carlo simulations to estimate win probabilities, updating beliefs about opponents strategies, and choosing actions based on CPT-weighted expected utility. 
-The belief updating system reflects beliefs based on observed actions and hands, where the priors are drawn from a probability distribution based on previous monte-carlo simulations of hand class probabilities with 10,000,000 iterations. 
+The belief updating system reflects beliefs based on observed actions and hands, where the priors are drawn from a probability distribution based on previous monte-carlo simulations of hand class probabilities with 10,000,000 iterations, executed from the repository by https://github.com/Sondar4/poker-sim.
 In order to estimate P(a=raise|H,I), I have used a logistic function to approximate the likelihood that a player would raise given the win rate.
 
 ---

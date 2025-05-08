@@ -39,6 +39,7 @@ class PokerGame:
         self.winner = None
 
         # Reset the opponent's prior belief to the original hand distributions
+        # Ensures that mental accounting closes, and the prior beliefs are not accumulated over all simulations
         for player in self.players:
             player.opponent_hand_class_probs = hand_distributions.copy()  # Reset the prior belief
 
@@ -90,7 +91,7 @@ class PokerGame:
         Simulate decisions for each player.
         """
        
-        # current_bet = 1000 if len(self.table.cards) <= 3 else 40
+        # current_bet = 100 if len(self.table.cards) <= 3 else 200
         current_bet = PokerGame.get_current_bet(self.table)
         for idx, player in enumerate(self.active_players):
             player.total_contribution = self.player_contributions[player]
@@ -171,7 +172,7 @@ class PokerGame:
     def generate_game_result(self) -> dict[PokerPlayer, tuple[int, int, int]]:
         """
         Generate the result of the game.
-        :returns: A dictionary of player stats: Player -> (Raises, Folds, Wins)
+        returns: A dictionary of player stats: Player -> (Raises, Folds, Wins)
         """
         game_result = {}
         for player in self.players:
