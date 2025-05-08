@@ -127,4 +127,4 @@ The following modules are adapted from open-source projects and are licensed und
 
 
 ## Note ##
-This is a cleaned up version of the original repository: github.com/MalaikaPK/poker-sim. The main difference is that this repository primarily includes the relevant files, whereas the original repository includes the whole process from the beginning, in which my brother in law Jacob Martens had to help me learn Python, to the final result used in this repository.
+This is a cleaned up version of the original repository. The main difference is that this repository exclusively includes the relevant files, whereas the original repository includes the whole process from the beginning, in which my brother in law Jacob Martens had to help me learn Python, to the final result used in this repository.
