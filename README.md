@@ -3,7 +3,8 @@
 
 Bachelor Thesis - Malaika Pohl Khader
 
-Reprository for simulating a Limit Texas Hold'em Poker game for five player types under Bayesian Nash Equilibrium (BNE) and Perfect Bayesian Nash Equilibrium (PBE), evaluated with Cumulative Prospect Theory and statistical analysis. The following is an overview of the moodules in the project.
+Reprository for simulating a Limit Texas Hold'em Poker game for five player types under Bayesian Nash Equilibrium (BNE) and Perfect Bayesian Nash Equilibrium (PBE), evaluated with Cumulative Prospect Theory and statistical analysis.
+The following is an overview of the moodules in the project.
 
 ## Installation
 
@@ -115,3 +116,8 @@ The following modules are adapted from open-source projects and are licensed und
    License: MIT License  
    Copyright (c) 2017-2025.  
    As with `cards.py`, the software can be freely used, modified, and distributed, provided the copyright and license are included.
+
+
+
+## Note ##
+This is a cleaned up version of the original repository: github.com/MalaikaPK/poker-sim. The main difference is that this repository primarily includes the relevant files, whereas the original repository includes the whole process from the beginning, in which my brother in law Jacob Martens had to help me learn Python, to the final result used in this repository.
