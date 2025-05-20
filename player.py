@@ -248,7 +248,7 @@ class CPT:
         utility_loss = self.value_function(-potential_loss, self.alpha, self.beta, self.lambda_)
 
         # Expected utility of raising
-        expected_utility_raise = (weighted_win_prob * utility_gain) + (1-weighted_win_prob) * utility_loss
+        expected_utility_raise = (weighted_win_prob * utility_gain) + weighted_loss_prob * utility_loss
         
 
         
